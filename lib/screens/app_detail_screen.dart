@@ -49,7 +49,10 @@ class AppDetailScreen extends StatelessWidget {
                 _row('Ikona v meniju', app.hasLauncherIcon ? 'Da' : 'Ne (skrita)'),
                 _row('Velikost APK', _formatBytes(app.apkSizeBytes)),
                 _row('SHA-256 podpisnega certifikata', app.signingCertSha256 ?? 'Ni na voljo'),
-                _row('Standby stanje (Android)', app.standbyBucketLabel),
+                _row(
+                  'Android jo ocenjuje kot neaktivno',
+                  app.isAppInactive == null ? 'Ni na voljo (ni Usage access)' : (app.isAppInactive! ? 'Da' : 'Ne'),
+                ),
                 _row(
                   'Izjema od varčevanja baterije',
                   app.isIgnoringBatteryOptimizations ? 'Da' : 'Ne',

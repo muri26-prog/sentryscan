@@ -1,33 +1,3 @@
-/// Android `UsageStatsManager.STANDBY_BUCKET_*` vrednosti - kopija konstant,
-/// da jih lahko beremo brez dodatne odvisnosti od native strani.
-class StandbyBucket {
-  static const int active = 10;
-  static const int workingSet = 20;
-  static const int frequent = 30;
-  static const int rare = 40;
-  static const int restricted = 45;
-  static const int never = 50;
-
-  static String label(int? bucket) {
-    switch (bucket) {
-      case active:
-        return 'Aktivna';
-      case workingSet:
-        return 'Delovni nabor';
-      case frequent:
-        return 'Pogosto uporabljena';
-      case rare:
-        return 'Redko uporabljena';
-      case restricted:
-        return 'Omejena';
-      case never:
-        return 'Nikoli uporabljena';
-      default:
-        return 'Neznano';
-    }
-  }
-}
-
 /// Znani "installer" paketi za Play Store / sistemski nameščevalnik - vse
 /// drugo (ali `null`) štejemo kot sideload za namene analize tveganja.
 const kPlayStoreInstaller = 'com.android.vending';
@@ -58,7 +28,11 @@ class AppInfo {
   final String? apkPath;
   final int apkSizeBytes;
   final bool isIgnoringBatteryOptimizations;
-  final int? standbyBucket;
+
+  /// Android-ova lastna ocena, ali je aplikacija trenutno "neaktivna"
+  /// (`UsageStatsManager.isAppInactive`). `null`, če dostop do statistike
+  /// uporabe (Usage access) ni odobren.
+  final bool? isAppInactive;
 
   const AppInfo({
     required this.packageName,
@@ -77,7 +51,7 @@ class AppInfo {
     required this.apkPath,
     required this.apkSizeBytes,
     required this.isIgnoringBatteryOptimizations,
-    required this.standbyBucket,
+    required this.isAppInactive,
   });
 
   factory AppInfo.fromMap(Map<dynamic, dynamic> map) {
@@ -102,7 +76,7 @@ class AppInfo {
       apkPath: map['apkPath'] as String?,
       apkSizeBytes: (map['apkSizeBytes'] as num?)?.toInt() ?? 0,
       isIgnoringBatteryOptimizations: (map['isIgnoringBatteryOptimizations'] as bool?) ?? false,
-      standbyBucket: (map['standbyBucket'] as num?)?.toInt(),
+      isAppInactive: map['isAppInactive'] as bool?,
     );
   }
 
@@ -114,5 +88,7 @@ class AppInfo {
   bool hasAnyPermission(Iterable<String> permissions) =>
       permissions.any((p) => grantedPermissions.contains(p));
 
-  String get standbyBucketLabel => StandbyBucket.label(standbyBucket);
+  /// Sistemska ocena "je trenutno aktivna" - obratno od [isAppInactive].
+  /// `null`, če ni na voljo (ni odobrenega dostopa do Usage access).
+  bool? get isActiveAccordingToSystem => isAppInactive == null ? null : !isAppInactive!;
 }

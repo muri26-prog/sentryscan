@@ -353,15 +353,17 @@ class HeuristicsEngine {
     }
 
     // --- Nenehno aktivna + izvzeta iz varčevanja + skrita ---
+    // isAppInactive != true zajame tako "sistem jo ocenjuje kot aktivno" kot
+    // "ni podatka" (brez Usage access privzeto raje preveč kot premalo opozori).
     if (!app.hasLauncherIcon &&
         !app.isSystemApp &&
         app.isIgnoringBatteryOptimizations &&
-        (app.standbyBucket == null || app.standbyBucket! <= 20)) {
+        app.isAppInactive != true) {
       add(build(
         'hidden_always_active',
         RiskSeverity.critical,
         'Skrita aplikacija se nenehno izvaja v ozadju',
-        'Android jo ocenjuje kot stalno aktivno (bucket: ${app.standbyBucketLabel}) in '
+        'Android je ne ocenjuje kot neaktivno in '
             'je izvzeta iz varčevanja z baterijo, hkrati pa nima ikone v meniju - '
             'to je pogosto vzrok tako za skrito delovanje kot za pospešeno '
             'praznjenje baterije.',

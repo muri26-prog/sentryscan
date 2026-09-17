@@ -127,16 +127,16 @@ class BatteryAnalysisService {
       ));
     }
 
-    // Aplikacije, ki tečejo brez omejitev IN jih Android ocenjuje kot stalno aktivne.
+    // Aplikacije, ki tečejo brez omejitev IN jih Android ocenjuje kot aktivne.
     for (final app in apps) {
-      final isAlwaysActive = app.standbyBucket != null && app.standbyBucket! <= 20;
-      if (app.isIgnoringBatteryOptimizations && isAlwaysActive && !app.isSystemApp) {
+      final isConfirmedActive = app.isAppInactive == false;
+      if (app.isIgnoringBatteryOptimizations && isConfirmedActive && !app.isSystemApp) {
         insights.add(BatteryInsight(
           id: 'battery.unrestricted.${app.packageName}',
           severity: RiskSeverity.medium,
           title: '${app.appLabel} deluje brez omejitev v ozadju',
-          description: 'Izvzeta je iz varčevanja z baterijo in jo Android ocenjuje kot '
-              'stalno aktivno (${app.standbyBucketLabel}). Če je ne uporabljaš pogosto, '
+          description: 'Izvzeta je iz varčevanja z baterijo in Android je ne ocenjuje kot '
+              'neaktivno. Če je ne uporabljaš pogosto, '
               'razmisli o odstranitvi izjeme v Nastavitve > Baterija.',
           relatedPackageName: app.packageName,
           relatedAppLabel: app.appLabel,

@@ -59,11 +59,12 @@ object NativeScanner {
         }
 
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-        val standbyBuckets = getStandbyBucketsSafe(context)
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+        val usageAccessGranted = isUsageAccessGranted(context)
 
         return packages.mapNotNull { pi ->
             try {
-                packageInfoToMap(context, pm, pi, powerManager, standbyBuckets)
+                packageInfoToMap(context, pm, pi, powerManager, usageStatsManager, usageAccessGranted)
             } catch (t: Throwable) {
                 null
             }
@@ -76,7 +77,8 @@ object NativeScanner {
         pm: PackageManager,
         pi: PackageInfo,
         powerManager: PowerManager?,
-        standbyBuckets: Map<String, Int>,
+        usageStatsManager: UsageStatsManager?,
+        usageAccessGranted: Boolean,
     ): Map<String, Any?> {
         val appInfo: ApplicationInfo = pi.applicationInfo ?: return emptyMap()
         val packageName = pi.packageName
@@ -140,6 +142,19 @@ object NativeScanner {
             0L
         }
 
+        // isAppInactive() deluje za POLJUBEN paket (ne le kličoč), a potrebuje
+        // odobren dostop do Usage access - brez njega vrne null (neznano),
+        // namesto da bi tiho vrnili napačno privzeto vrednost.
+        val isAppInactive: Boolean? = if (usageAccessGranted) {
+            try {
+                usageStatsManager?.isAppInactive(packageName)
+            } catch (t: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
+
         return mapOf(
             "packageName" to packageName,
             "appLabel" to label,
@@ -157,7 +172,7 @@ object NativeScanner {
             "apkPath" to apkPath,
             "apkSizeBytes" to apkSizeBytes,
             "isIgnoringBatteryOptimizations" to isIgnoringBatteryOptimizations,
-            "standbyBucket" to standbyBuckets[packageName],
+            "isAppInactive" to isAppInactive,
         )
     }
 
@@ -180,18 +195,6 @@ object NativeScanner {
             pi.signatures?.firstOrNull()?.toByteArray()
         }
         return bytes?.let { sha256Hex(it) }
-    }
-
-    private fun getStandbyBucketsSafe(context: Context): Map<String, Int> {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return emptyMap()
-        return try {
-            val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
-                ?: return emptyMap()
-            usm.appStandbyBuckets
-        } catch (t: Throwable) {
-            // Zahteva odobren dostop do "Usage access" - brez njega vrne prazno.
-            emptyMap()
-        }
     }
 
     // ---------------------------------------------------------------
