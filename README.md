@@ -93,8 +93,8 @@ sproži samodejno ob push-u na `main`.
 
 - Flutter SDK (stable channel; razvito in preverjeno s **Flutter 3.47.4 /
   Dart 3.13.3** - `flutter --version`)
-- Android Studio ali samostojen Android SDK: **compileSdk/targetSdk 34**,
-  `build-tools;34.0.0`, JDK 17
+- Android Studio ali samostojen Android SDK: **compileSdk/targetSdk 36**,
+  JDK 17 (Android Studio ju namesti/posodobi samodejno ob prvem odprtju)
 - Android telefon z **Android 8.0 (API 26)** ali novejšim, z omogočenim
   USB razhroščevanjem (za sideload prek `adb install`)
 
