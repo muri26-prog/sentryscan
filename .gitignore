@@ -1,0 +1,28 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+
+# Android
+android/local.properties
+android/.gradle/
+android/captures/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+*.jks
+*.keystore
+
+# gradlew, gradlew.bat in gradle/wrapper/gradle-wrapper.jar se NAMENOMA
+# sledijo (standardna praksa za Gradle Wrapper - omogoča gradnjo brez
+# predhodno nameščenega Gradle).
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store

@@ -1,0 +1,53 @@
+name: sentryscan
+description: >
+  SentryScan - lokalni varnostni pregledovalnik za Android: zaznava sledi
+  vohunske/nadzorne programske opreme (stalkerware/spyware), sumljivih
+  dovoljenj in aplikacij ter analizira vzroke praznjenja baterije.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # HTTP client za VirusTotal API
+  http: ^1.6.0
+
+  # Lokalna baza: poročila pregledov, zgodovina baterije, VT predpomnilnik
+  sqflite: ^2.4.4
+  path_provider: ^2.1.6
+  path: ^1.9.1
+
+  # Varno shranjevanje VirusTotal API ključa
+  flutter_secure_storage: ^11.2.0
+
+  # Preprosta nastavitvena shramba (npr. zadnji čas pregleda, stikala funkcij)
+  shared_preferences: ^2.5.5
+
+  # Runtime dovoljenja + odpiranje posebnih nastavitev (usage access, battery
+  # optimization exemptions, ...)
+  permission_handler: ^13.0.2
+
+  # Formatiranje datumov/številk
+  intl: ^0.20.3
+
+  # Grafi za analizo praznjenja baterije
+  fl_chart: ^1.2.0
+
+  # Info o sami aplikaciji in napravi (za poročilo/diagnostiko)
+  package_info_plus: ^10.2.1
+  device_info_plus: ^13.2.0
+
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
