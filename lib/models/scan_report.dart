@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'app_info.dart';
 import 'risk_finding.dart';
 import 'system_security_snapshot.dart';
@@ -25,11 +27,15 @@ class ScanReport {
 
   /// Skupna ocena tveganja naprave, 0 (brez zaznanih tveganj) do 100
   /// (kritično). Ni "verjetnost okužbe" v statističnem smislu, temveč
-  /// utežena vsota resnosti najdb - namenjena razvrščanju/prednostenju, ne
-  /// natančni napovedi.
+  /// utežena vsota resnosti najdb, preslikana skozi krivuljo pojemajočih
+  /// donosov (namesto linearnega seštevka z obrezovanjem pri 100) - tako se
+  /// npr. 3 visoke najdbe ne prikažejo enako kot 30 kritičnih. Namenjena
+  /// razvrščanju/prednostenju, ne natančni statistični napovedi.
   int get riskScore {
     final total = findings.fold<int>(0, (sum, f) => sum + f.severity.weight);
-    return total.clamp(0, 100);
+    if (total <= 0) return 0;
+    final score = 100 * (1 - math.exp(-total / 60));
+    return score.round().clamp(0, 100);
   }
 
   String get riskLevelLabel {

@@ -30,8 +30,15 @@ class ScanService {
 
   Map<String, int> _lastUsageStats = {};
   final Map<String, VtVerdict> _vtVerdictsByPackage = {};
+  ScanReport? _lastReport;
 
   Map<String, int> get lastUsageStats => _lastUsageStats;
+
+  /// Poln rezultat zadnjega pregleda v TEJ seji aplikacije (v pomnilniku, ne
+  /// na disku) - uporabljen za "podrobnosti zadnjega pregleda" na domačem
+  /// zaslonu, brez ponovnega poganjanja pregleda. `null`, dokler v tej seji
+  /// še ni bil izveden noben pregled (npr. po ponovnem zagonu aplikacije).
+  ScanReport? get lastReport => _lastReport;
 
   /// Izvede hiter, popolnoma lokalen pregled (brez omrežja). Traja od nekaj
   /// sekund do ~1 minute, odvisno od števila nameščenih aplikacij.
@@ -75,6 +82,7 @@ class ScanService {
       highCount: report.highFindings.length,
     );
 
+    _lastReport = report;
     return report;
   }
 
@@ -117,12 +125,14 @@ class ScanService {
       vtVerdictsByPackage: Map.of(_vtVerdictsByPackage),
     );
 
-    return ScanReport(
+    final updated = ScanReport(
       generatedAt: previous.generatedAt,
       apps: previous.apps,
       systemSnapshot: previous.systemSnapshot,
       findings: findings,
     );
+    _lastReport = updated;
+    return updated;
   }
 
   void dispose() => _vt.dispose();

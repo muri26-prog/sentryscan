@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../widgets/section_card.dart';
 import 'battery_screen.dart';
 import 'permissions_setup_screen.dart';
+import 'scan_report_screen.dart';
 import 'scan_screen.dart';
 import 'settings_screen.dart';
 
@@ -63,7 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Stanje naprave',
             subtitle: lastScan == null
                 ? 'Še ni bil izveden noben pregled'
-                : 'Zadnji pregled: ${_formatTimestamp(lastScan['generatedAt'] as int)}',
+                : 'Zadnji pregled: ${_formatTimestamp(lastScan['generatedAt'] as int)} - dotakni se za podrobnosti',
+            onTap: lastScan == null ? null : () => _openLastReportDetails(context),
             child: _loadingHistory
                 ? const LinearProgressIndicator()
                 : _buildLastScoreSummary(context, lastScan),
@@ -130,6 +132,29 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openLastReportDetails(BuildContext context) {
+    final report = widget.scanService.lastReport;
+    if (report == null) {
+      // Trajno se shranjuje le povzetek (števci), poln seznam najdb pa živi
+      // samo v pomnilniku med tekočo sejo aplikacije - po ponovnem zagonu
+      // aplikacije ga ni več na voljo brez novega pregleda.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Podrobnosti zadnjega pregleda niso več na voljo (aplikacija je bila '
+            'medtem znova zagnana) - zaženi nov pregled.',
+          ),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ScanReportScreen(scanService: widget.scanService, report: report),
       ),
     );
   }
