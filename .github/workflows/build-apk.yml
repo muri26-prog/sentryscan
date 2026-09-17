@@ -8,6 +8,15 @@ on:
   push:
     branches: [main, master]
 
+# issues:write - da lahko ob napaki gradnje objavimo dnevnik kot GitHub issue
+#   (Actions dnevniki/artefakti so sicer na Azure blob storage, ki ni vedno
+#   dosegljiv iz vsakega omrežja/orodja - issue objava gre prek navadnega
+#   GitHub API, zato je zanesljivejša za avtomatsko diagnostiko).
+# contents:write - za objavo .apk kot GitHub Release priponko ob uspehu.
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,11 +40,36 @@ jobs:
         run: flutter analyze || true
 
       - name: Build APK (release)
-        run: flutter build apk --release
+        shell: bash
+        run: |
+          set +e
+          flutter build apk --release --verbose 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Report failure as GitHub issue (log tail)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tail -c 60000 build.log > build_tail.log
+          gh issue create \
+            --title "Build failure: run ${{ github.run_id }}" \
+            --body-file build_tail.log
 
       - name: Upload APK as build artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: sentryscan-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
+
+      - name: Publish APK as GitHub Release asset
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "build-${{ github.run_number }}" \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --title "SentryScan build ${{ github.run_number }}" \
+            --notes "Samodejno zgrajen APK iz commita ${{ github.sha }}"
