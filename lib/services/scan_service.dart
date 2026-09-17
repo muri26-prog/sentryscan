@@ -37,7 +37,10 @@ class ScanService {
   /// sekund do ~1 minute, odvisno od števila nameščenih aplikacij.
   Future<ScanReport> runScan({ScanProgressCallback? onProgress}) async {
     onProgress?.call('Berem seznam nameščenih aplikacij ...');
-    final apps = await _bridge.getInstalledApps();
+    final rawApps = await _bridge.getInstalledApps();
+    // Deduplicira po packageName (glej isto opombo v HeuristicsEngine) - tu
+    // je edino mesto, kjer se seznam aplikacij za pregled dejansko sestavi.
+    final apps = {for (final a in rawApps) a.packageName: a}.values.toList(growable: false);
 
     onProgress?.call('Berem sistemske varnostne nastavitve ...');
     final system = await _bridge.getSystemSecuritySnapshot();

@@ -45,7 +45,15 @@ class HeuristicsEngine {
 
     findings.addAll(_deviceLevelFindings(system));
 
+    // Deduplicira po packageName - PackageManager na nekaterih napravah
+    // (npr. z delovnim profilom ali OEM posebnostmi) lahko isti paket vrne
+    // večkrat; brez tega bi se vsaka najdba zanj podvojila.
+    final uniqueApps = <String, AppInfo>{};
     for (final app in apps) {
+      uniqueApps.putIfAbsent(app.packageName, () => app);
+    }
+
+    for (final app in uniqueApps.values) {
       findings.addAll(_appLevelFindings(
         app,
         system,
@@ -239,7 +247,7 @@ class HeuristicsEngine {
     }
 
     // --- Device admin ---
-    if (isActiveDeviceAdmin && !app.hasLauncherIcon && !app.isSystemApp) {
+    if (isActiveDeviceAdmin && !app.hasLauncherIcon && !app.isPreinstalled) {
       add(build(
         'hidden_device_admin',
         RiskSeverity.critical,
@@ -259,7 +267,7 @@ class HeuristicsEngine {
     }
 
     // --- Skrita ikona (splošno) ---
-    if (!app.hasLauncherIcon && !app.isSystemApp && !isActiveDeviceAdmin && !hasAccessibility) {
+    if (!app.hasLauncherIcon && !app.isPreinstalled && !isActiveDeviceAdmin && !hasAccessibility) {
       add(build(
         'hidden_icon',
         RiskSeverity.medium,
@@ -282,7 +290,7 @@ class HeuristicsEngine {
 
     // --- Skrita + nikoli odprta s strani uporabnika + občutljiva dovoljenja ---
     if (!app.hasLauncherIcon &&
-        !app.isSystemApp &&
+        !app.isPreinstalled &&
         neverUsedByUser &&
         sensitiveGranted.isNotEmpty) {
       add(build(
@@ -341,7 +349,7 @@ class HeuristicsEngine {
     final mimicsKnownBrand = kKnownBrandKeywords.any(
       (kw) => (lowerLabel.contains(kw) || lowerPkg.contains(kw)),
     );
-    if (mimicsKnownBrand && app.isSideloaded && !app.isSystemApp) {
+    if (mimicsKnownBrand && app.isSideloaded) {
       add(build(
         'brand_mimic',
         RiskSeverity.medium,
@@ -356,7 +364,7 @@ class HeuristicsEngine {
     // isAppInactive != true zajame tako "sistem jo ocenjuje kot aktivno" kot
     // "ni podatka" (brez Usage access privzeto raje preveč kot premalo opozori).
     if (!app.hasLauncherIcon &&
-        !app.isSystemApp &&
+        !app.isPreinstalled &&
         app.isIgnoringBatteryOptimizations &&
         app.isAppInactive != true) {
       add(build(

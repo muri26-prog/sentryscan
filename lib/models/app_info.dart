@@ -1,12 +1,4 @@
-/// Znani "installer" paketi za Play Store / sistemski nameščevalnik - vse
-/// drugo (ali `null`) štejemo kot sideload za namene analize tveganja.
 const kPlayStoreInstaller = 'com.android.vending';
-const kKnownSystemInstallers = {
-  kPlayStoreInstaller,
-  'com.google.android.packageinstaller',
-  'com.android.packageinstaller',
-  'com.google.android.gms', // npr. Play System updates / instant apps
-};
 
 /// Surovi podatki o eni nameščeni aplikaciji, kot jih vrne
 /// `NativeScanner.getInstalledApps` na Android strani. Ta razred namenoma NE
@@ -80,8 +72,37 @@ class AppInfo {
     );
   }
 
-  bool get isSideloaded =>
-      installerPackageName == null || !kKnownSystemInstallers.contains(installerPackageName);
+  /// Poti pod temi mapami so del bralno-zaščitenih sistemskih particij -
+  /// aplikacija tja lahko pride SAMO ob izdelavi/OTA posodobitvi naprave, ne
+  /// z naknadno (ročno ali zlonamerno) namestitvijo brez root dostopa. To je
+  /// zanesljivejši signal "prišla je s telefonom" kot `installerPackageName`,
+  /// ki je na marsikateri OEM prednameščeni aplikaciji (Samsung/Xiaomi/...)
+  /// pogosto `null`, kar bi jo brez tega preverjanja napačno označilo za
+  /// sideload.
+  static const _kSystemPartitionPrefixes = [
+    '/system/',
+    '/system_ext/',
+    '/vendor/',
+    '/product/',
+    '/odm/',
+    '/apex/',
+  ];
+
+  bool get isOnSystemPartition =>
+      apkPath != null && _kSystemPartitionPrefixes.any((p) => apkPath!.startsWith(p));
+
+  /// Prišla je s telefonom (tovarniško ali prek OTA), ne glede na to, ali je
+  /// OS to konkretno aplikacijo označil z zastavico FLAG_SYSTEM.
+  bool get isPreinstalled => isSystemApp || isUpdatedSystemApp || isOnSystemPartition;
+
+  bool get isFromPlayStore => installerPackageName == kPlayStoreInstaller;
+
+  /// Aplikacija, ki je NI prišla s telefonom IN ni bila nameščena prek
+  /// Google Play - torej jo je nekdo namestil naknadno mimo uradne trgovine
+  /// (APK datoteka, drug app store, ADB, MDM ...). To je precej ožji in
+  /// zanesljivejši pogoj kot zgolj "installerPackageName ni Play Store", ki
+  /// bi sam zase napačno zajel na stotine legitimnih OEM komponent.
+  bool get isSideloaded => !isPreinstalled && !isFromPlayStore;
 
   bool hasPermission(String permission) => grantedPermissions.contains(permission);
 

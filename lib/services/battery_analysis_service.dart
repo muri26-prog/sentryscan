@@ -130,7 +130,7 @@ class BatteryAnalysisService {
     // Aplikacije, ki tečejo brez omejitev IN jih Android ocenjuje kot aktivne.
     for (final app in apps) {
       final isConfirmedActive = app.isAppInactive == false;
-      if (app.isIgnoringBatteryOptimizations && isConfirmedActive && !app.isSystemApp) {
+      if (app.isIgnoringBatteryOptimizations && isConfirmedActive && !app.isPreinstalled) {
         insights.add(BatteryInsight(
           id: 'battery.unrestricted.${app.packageName}',
           severity: RiskSeverity.medium,
